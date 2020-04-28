@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import unicodedata
 
+with requests.Session() as s:
 
     payload = {
         "tbAnvandarnamn": "nils.forssén",
