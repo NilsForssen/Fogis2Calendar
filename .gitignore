@@ -1,4 +1,5 @@
 *.pickle
+*.json
 
 >>>>>>> Google_Calendar
 # Cache files for Sublime Text
