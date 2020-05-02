@@ -43,3 +43,21 @@ def createEvent(event):
     event = service.events().insert(calendarId="primary", body=event).execute()
 
     return event
+
+
+def deleteEvent(eventId):
+    """
+    Delete event with given id from google calendar
+    """
+
+    service.events().delete(calendarId="primary", eventId=eventId).execute()
+
+
+def listEvents(**kwargs):
+    """
+    Return list of all google calendar events
+    """
+
+    events = service.events().list(calendarId="primary", **kwargs).execute()
+
+    return events

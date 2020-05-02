@@ -3,22 +3,24 @@ from bs4 import BeautifulSoup
 import unicodedata
 import googleCalendar
 import datetime
-import argparse
+import sys
 
-# Take fogis username and password as arguments, this is personal data
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Create game events in google calendar from schedule from fogis")
 
-parser.add_argument("username", action="store", help="fogis username")
-parser.add_argument("password", action="store", help="fogis password")
-args = parser.parse_args()
+
+try:
+    username = sys.argv[1]
+    password = sys.argv[2]
+except IndexError:
+    print("Both username and password must be passed as arguments")
+    sys.exit()
+
 
 
 with requests.Session() as session:
 
     payload = {
-        "tbAnvandarnamn": args.username,
-        "tbLosenord": args.password,
+        "tbAnvandarnamn": username,
+        "tbLosenord": password,
         "btnLoggaIn": "Logga in"
     }
 
@@ -63,10 +65,11 @@ with requests.Session() as session:
     # Remove empty top row
     data.pop(0)
 
-    # Create google calendar event for each game in fogis table
-    for game in data:
 
-        event = {}
+    def formatGame(game):
+        """
+        Turn given game into google calendar event format
+        """
 
         # If time is TBD, set event time to 00:00:00
         if ":" in game["time"][-5:]:
@@ -78,11 +81,11 @@ with requests.Session() as session:
 
         endTime = startTime + datetime.timedelta(hours=duration.hour, minutes=duration.minute, seconds=duration.second)
         
-        # create google calendar friendly event dictionary
-        event = {
+        # create google-calendar-friendly event out of given game
+        gameEvent = {
           "summary": "Domare {0}".format(game["competition"]),
           "location": "{0}".format(game["location"].replace("GoogleBingHitta.se", "")),
-          "description": "{0}".format(game["referees"]),
+          "description": "{0}\nMatchnummer: {1}".format(game["referees"], game["number"]),
           "start": {
             "dateTime": "{0}T{1}+02:00".format(game["time"][:10], startTime.strftime("%H:%M:%S"))
           },
@@ -95,8 +98,37 @@ with requests.Session() as session:
           },
         }
 
-        # Create event
-        googleCalendar.createEvent(event)
+        return gameEvent
 
-        print("event created at {0}".format(startTime))
 
+    # Format all games from fogis
+    data = list(map(formatGame, data))
+    comingEvents = [event for event in googleCalendar.listEvents(timeMin=data[0]["start"]["dateTime"], timeMax=data[-1]["end"]["dateTime"])["items"]]
+
+
+    # Delete all coming games to refresh them
+    for comingEvent in comingEvents:
+        
+        try:
+            lastLine = comingEvent["description"].splitlines()[-1]
+
+            if "Matchnummer: " in lastLine:
+
+                # The event is a previously uploaded game, delete it
+                # All currently active games will be added later
+                # This game could have e.g. been canceled recently, thus it needs removal
+
+                googleCalendar.deleteEvent(comingEvent["id"])
+
+        except KeyError:
+
+            # An event wiithout a description was found, this is not a game from fogis
+
+            pass
+
+
+    for game in data:
+
+        # Add all new events, in case the event was just deleted, this will just refresh it
+        print("Event created at {0}".format(game["start"]["dateTime"]))
+        googleCalendar.createEvent(game)
