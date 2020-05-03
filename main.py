@@ -5,13 +5,38 @@ import googleCalendar
 import datetime
 import sys
 
+"""
+Python Script for adding fogis events to Google Calendar
+
+credenials.json from Google API project is to be located in working directory.
+
+A token.pickle file will be created in Working Directory.
+Deleting this file will result in you having to approve
+the script's access to google calendar.
+
+Script can be executed:
+-> Manually by running executable(.py) and using GUI
+-> Automatically by CMD passing fogis credentials as arguments
+e.g script.exe(.py) myUser myPass
+
+The latter can  be used with Windows task scheduler to schedule calendar updates.
+
+Author: Nils Forssén, Jämtland County, Sweden
+"""
+
+
 def getDataPage(uName, pWord):
+    """
+    Login to fogis and return the datapage.
+    If not accessible, return None.
+    """
 
     with requests.Session() as session:
 
+        # Data to post to loginPage
         payload = {
-            "tbAnvandarnamn": pWord,
-            "tbLosenord": uName,
+            "tbAnvandarnamn": uName,
+            "tbLosenord": pWord,
             "btnLoggaIn": "Logga in"
         }
 
@@ -20,33 +45,33 @@ def getDataPage(uName, pWord):
         }
 
         # Log in page
-        logInPage = session.get("https://fogis.svenskfotboll.se/Fogisdomarklient/login/Login.aspx")
+        loginPage = session.get("https://fogis.svenskfotboll.se/Fogisdomarklient/login/Login.aspx", headers=headers)
 
         # post with all required information
-        soup = BeautifulSoup(logInPage.content, features="lxml")
+        soup = BeautifulSoup(loginPage.content, features="lxml")
+
         payload["__VIEWSTATE"] = soup.select_one("#__VIEWSTATE")["value"]
         payload["__VIEWSTATEGENERATOR"] = soup.select_one("#__VIEWSTATEGENERATOR")["value"]
-
         payload["__VIEWSTATE"] = soup.find("input", attrs={"name" : "__VIEWSTATE"})["value"]
         payload["__VIEWSTATEGENERATOR"] = soup.find("input", attrs={"name" : "__VIEWSTATEGENERATOR"})["value"]
         payload["__EVENTVALIDATION"] = soup.find("input", attrs={"name" : "__EVENTVALIDATION"})["value"]
 
+        # Post with the login credentials and additional required information
         session.post("https://fogis.svenskfotboll.se/Fogisdomarklient/login/Login.aspx", data=payload, headers=headers)
-
-        #logInPage = 
 
         # Schedule is located here
         dataPage = session.get("https://fogis.svenskfotboll.se/Fogisdomarklient/Uppdrag/UppdragUppdragLista.aspx")
-        print(dataPage.text)
-        print()
-        print()
-        print(logInPage.text)
-        if dataPage.text == logInPage.text:
 
-            # Login unsuccessfull
+        if b"FOGIS - Domarinloggning" in dataPage.content:
+
+            # Login unsuccessfull, access to dataPage url was not granted.
+            # e.g. username or password incorrect, account locked/banned etc.
 
             return None
         else:
+
+            # Login successfull
+
             return dataPage
 
 
@@ -142,17 +167,18 @@ def updateCalendar(page):
         print("Event created at {0}".format(game["start"]["dateTime"]))
         googleCalendar.createEvent(game)
 
+
 if len(sys.argv) < 2:
 
     # No arguments passed, launch GUI  prompt for username and password
-    import tkinter as tk
 
+    import tkinter as tk
 
     root = tk.Tk()
 
     root.grid_columnconfigure(1, weight=1)
 
-
+    # GUI elements
     header = tk.Label(text="Enter your fogis credentials", font='Helvetica 16')
     uNameLabel = tk.Label(text="Username:", font="Helvetica 10")
     uNameEntry = tk.Entry()
@@ -164,9 +190,14 @@ if len(sys.argv) < 2:
     promptLabel = tk.Label(textvariable=promptString, font="Helvetica 10")
 
     def btnUpdateCalendar():
+        """
+        Comprehensive update calendar function linked to btn in GUI 
+        """
+
         page = getDataPage(uNameEntry.get(), pWordEntry.get())
-        print(page, uNameEntry.get(), pWordEntry.get())
-        if page:
+
+        if page is not None:
+
             promptString.set("Updated!")
             promptLabel.config(fg="green2")
             updateCalendar(page)
@@ -174,13 +205,14 @@ if len(sys.argv) < 2:
             # "Updated"
 
         else:
-            promptString.set("Login Unsuccessfull!")
+
+            promptString.set("Login unsuccessfull!")
             promptLabel.config(fg="red2")
-            # "Incorrect"
 
 
     btn = tk.Button(text="Update Calendar", font="Helvetica 10 bold", command=btnUpdateCalendar, bg="green2", activebackground="green2")
 
+    # Grid GUI elements
     header.grid(columnspan=2, row=0, column=0, sticky="NSEW")
     uNameLabel.grid(row=1, sticky="W")
     uNameEntry.grid(row=1, column=1, sticky="EW")
@@ -188,7 +220,6 @@ if len(sys.argv) < 2:
     pWordEntry.grid(row=2, column=1, sticky="EW")
     promptLabel.grid(columnspan=2, row=3, sticky="NSEW")
     btn.grid(columnspan=2, row=4)
-
 
     root.mainloop()
 
@@ -203,4 +234,9 @@ else:
         print("Both username and password must be passed as arguments")
         sys.exit()
 
-    updateCalendar(getDataPage(username, password))
+    page = getDataPage(username, password)
+
+    if page is not None:
+        updateCalendar(page)
+    else:
+        print("Login unsuccessfull")

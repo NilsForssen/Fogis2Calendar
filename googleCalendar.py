@@ -6,7 +6,16 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-# If modifying these scopes, delete the file token.pickle.
+"""
+Resource to update Google Calendar using credentials.json in Working Directory.
+
+A token.pickle file will be created for permissions to calendar.
+
+Author: Nils Forssén, Jämtland County, Sweden
+"""
+
+
+# Give accesss to complete Google Calendar
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def getCredentials():
