@@ -94,7 +94,7 @@ def formatGame(game):
     gameEvent = {
       "summary": "Domare {0}".format(game["competition"]),
       "location": "{0}".format(game["location"].replace("GoogleBingHitta.se", "")),
-      "description": "{0}\n\n{1}\n\nMatchnummer: {2}".format(game["game"], game["referees"], game["number"]),
+      "description": "{0}\n{1}\nMatchnummer: {2}".format(game["game"], game["referees"], game["number"]),
       "start": {
         "dateTime": "{0}T{1}+02:00".format(game["time"][:10], startTime.strftime("%H:%M:%S"))
       },
