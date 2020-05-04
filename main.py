@@ -12,7 +12,7 @@ credenials.json from Google API project is to be located in working directory.
 
 A token.pickle file will be created in Working Directory.
 Deleting this file will result in you having to approve
-the script's access to google calendar.
+access to Google Calendar.
 
 Script can be executed:
 -> Manually by running executable(.py) and using GUI

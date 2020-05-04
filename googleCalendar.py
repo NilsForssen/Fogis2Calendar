@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 """
 Resource to update Google Calendar using credentials.json in Working Directory.
 
-A token.pickle file will be created for permissions to calendar.
+A token.pickle file will be created for permissions to Google Calendar.
 
 Author: Nils Forssén, Jämtland County, Sweden
 """
