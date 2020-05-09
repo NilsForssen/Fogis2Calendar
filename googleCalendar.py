@@ -2,7 +2,7 @@ from __future__ import print_function
 import datetime
 import pickle
 import os.path
-from googleapiclient.discovery import build
+from googleapiclient import discovery
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
@@ -42,7 +42,7 @@ def getCredentials():
     return creds
 
 
-service = build('calendar', 'v3', credentials=getCredentials())
+service = discovery.build('calendar', 'v3', credentials=getCredentials())
 
 def createEvent(event):
     """

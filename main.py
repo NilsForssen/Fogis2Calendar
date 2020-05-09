@@ -4,6 +4,7 @@ import unicodedata
 import googleCalendar
 import datetime
 import sys
+import pkg_resources.py2_warn
 
 """
 Python Script for adding fogis events to Google Calendar
