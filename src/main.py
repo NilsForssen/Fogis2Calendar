@@ -169,75 +169,77 @@ def updateCalendar(page):
         googleCalendar.createEvent(game)
 
 
-if len(sys.argv) < 2:
+if __name__ == "__main__":
 
-    # No arguments passed, launch GUI  prompt for username and password
+    if len(sys.argv) < 2:
 
-    import tkinter as tk
+        # No arguments passed, launch GUI prompt for username and password
 
-    root = tk.Tk()
+        import tkinter as tk
 
-    root.grid_columnconfigure(1, weight=1)
+        root = tk.Tk()
 
-    # GUI elements
-    header = tk.Label(text="Enter your fogis credentials", font='Helvetica 16')
-    uNameLabel = tk.Label(text="Username:", font="Helvetica 10")
-    uNameEntry = tk.Entry()
-    pWordLabel = tk.Label(text="Password:", font="Helvetica 10")
-    pWordEntry = tk.Entry()
+        root.grid_columnconfigure(1, weight=1)
 
-    promptString = tk.StringVar()
-    promptString.set("")
-    promptLabel = tk.Label(textvariable=promptString, font="Helvetica 10")
+        # GUI elements
+        header = tk.Label(text="Enter your fogis credentials", font='Helvetica 16')
+        uNameLabel = tk.Label(text="Username:", font="Helvetica 10")
+        uNameEntry = tk.Entry()
+        pWordLabel = tk.Label(text="Password:", font="Helvetica 10")
+        pWordEntry = tk.Entry()
 
-    def btnUpdateCalendar():
-        """
-        Comprehensive update calendar function linked to btn in GUI 
-        """
+        promptString = tk.StringVar()
+        promptString.set("")
+        promptLabel = tk.Label(textvariable=promptString, font="Helvetica 10")
 
-        page = getDataPage(uNameEntry.get(), pWordEntry.get())
+        def btnUpdateCalendar():
+            """
+            Comprehensive update calendar function linked to btn in GUI 
+            """
+
+            page = getDataPage(uNameEntry.get(), pWordEntry.get())
+
+            if page is not None:
+
+                promptString.set("Updated!")
+                promptLabel.config(fg="green2")
+                updateCalendar(page)
+
+                # "Updated"
+
+            else:
+
+                promptString.set("Login unsuccessfull!")
+                promptLabel.config(fg="red2")
+
+
+        btn = tk.Button(text="Update Calendar", font="Helvetica 10 bold", command=btnUpdateCalendar, bg="green2", activebackground="green2")
+
+        # Grid GUI elements
+        header.grid(columnspan=2, row=0, column=0, sticky="NSEW")
+        uNameLabel.grid(row=1, sticky="W")
+        uNameEntry.grid(row=1, column=1, sticky="EW")
+        pWordLabel.grid(row=2, sticky="W")
+        pWordEntry.grid(row=2, column=1, sticky="EW")
+        promptLabel.grid(columnspan=2, row=3, sticky="NSEW")
+        btn.grid(columnspan=2, row=4)
+
+        root.mainloop()
+
+    else:
+
+        # username and password arguments passed, don't launch GUI
+
+        try:
+            username = sys.argv[1]
+            password = sys.argv[2]
+        except IndexError:
+            print("Both username and password must be passed as arguments")
+            sys.exit()
+
+        page = getDataPage(username, password)
 
         if page is not None:
-
-            promptString.set("Updated!")
-            promptLabel.config(fg="green2")
             updateCalendar(page)
-
-            # "Updated"
-
         else:
-
-            promptString.set("Login unsuccessfull!")
-            promptLabel.config(fg="red2")
-
-
-    btn = tk.Button(text="Update Calendar", font="Helvetica 10 bold", command=btnUpdateCalendar, bg="green2", activebackground="green2")
-
-    # Grid GUI elements
-    header.grid(columnspan=2, row=0, column=0, sticky="NSEW")
-    uNameLabel.grid(row=1, sticky="W")
-    uNameEntry.grid(row=1, column=1, sticky="EW")
-    pWordLabel.grid(row=2, sticky="W")
-    pWordEntry.grid(row=2, column=1, sticky="EW")
-    promptLabel.grid(columnspan=2, row=3, sticky="NSEW")
-    btn.grid(columnspan=2, row=4)
-
-    root.mainloop()
-
-else:
-
-    # username and password arguments passed, don't launch GUI
-
-    try:
-        username = sys.argv[1]
-        password = sys.argv[2]
-    except IndexError:
-        print("Both username and password must be passed as arguments")
-        sys.exit()
-
-    page = getDataPage(username, password)
-
-    if page is not None:
-        updateCalendar(page)
-    else:
-        print("Login unsuccessfull")
+            print("Login unsuccessfull")
