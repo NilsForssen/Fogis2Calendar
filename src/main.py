@@ -4,6 +4,7 @@ import unicodedata
 import googleCalendar
 import datetime
 import sys
+import os
 import pkg_resources.py2_warn
 
 """
@@ -165,8 +166,10 @@ def updateCalendar(page):
     for game in data:
 
         # Add all new events, in case the event was just deleted, this will just refresh it
-        print("Event created at {0}".format(game["start"]["dateTime"]))
+
         googleCalendar.createEvent(game)
+        
+        print("Event created! {0}".format(game["start"]["dateTime"]))
 
 
 if __name__ == "__main__":
@@ -179,7 +182,12 @@ if __name__ == "__main__":
 
         root = tk.Tk()
 
+        # Make the Entrys expand to fill empty space
         root.grid_columnconfigure(1, weight=1)
+
+        # Window icon
+        root.iconbitmap(os.path.join(os.path.dirname(os.path.abspath(__file__)), "calendar_icon.ico"))
+        root.title("Fogis2Calendar")
 
         # GUI elements
         header = tk.Label(text="Enter your fogis credentials", font='Helvetica 16')
