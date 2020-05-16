@@ -2,7 +2,7 @@ from __future__ import print_function
 import datetime
 import pickle
 import os.path
-from googleapiclient import discovery
+from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
@@ -16,7 +16,7 @@ Author: Nils Forssén, Jämtland County, Sweden
 
 
 # Give accesss to complete Google Calendar
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
+SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 
 def getCredentials():
     """
@@ -42,7 +42,7 @@ def getCredentials():
     return creds
 
 
-service = discovery.build('calendar', 'v3', credentials=getCredentials())
+service = build('calendar', 'v3', credentials=getCredentials())
 
 def createEvent(event):
     """
@@ -67,6 +67,8 @@ def listEvents(**kwargs):
     Return list of all google calendar events
     """
 
-    events = service.events().list(calendarId="primary", **kwargs).execute()
+    events_result = service.events().list(calendarId="primary", singleEvents=True, orderBy='startTime', **kwargs).execute()
+
+    events = events_result.get('items', [])
 
     return events
