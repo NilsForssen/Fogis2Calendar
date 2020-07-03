@@ -10,7 +10,7 @@ import pkg_resources.py2_warn
 """
 Python Script for adding fogis events to Google Calendar
 
-credenials.json from Google API project is to be located in working directory.
+credentials.json from Google API project is to be located in working directory.
 
 A token.pickle file will be created in Working Directory.
 Deleting this file will result in you having to approve
@@ -76,13 +76,13 @@ def getDataPage(uName, pWord):
 
         if b"FOGIS - Domarinloggning" in dataPage.content:
 
-            # Login unsuccessfull, access to dataPage url was not granted.
+            # Login unsuccessful, access to dataPage url was not granted.
             # e.g. username or password incorrect, account locked/banned etc.
 
             return None
         else:
 
-            # Login successfull
+            # Login successful
 
             return dataPage
 
@@ -150,7 +150,7 @@ def updateCalendar(page):
     # Format all games from fogis
     data = list(map(formatGame, data))
     comingEvents = googleCalendar.listEvents(timeMin=data[0]["start"]["dateTime"], timeMax=data[-1]["end"]["dateTime"])
-
+    print(data[0]["start"]["dateTime"])
     # Delete all coming games to refresh them
     for comingEvent in comingEvents:
         
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
             else:
 
-                promptString.set("Login unsuccessfull!")
+                promptString.set("Login unsuccessful!")
                 promptLabel.config(fg="red2")
 
 
