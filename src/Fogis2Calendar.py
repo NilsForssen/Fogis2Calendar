@@ -117,6 +117,7 @@ def formatGame(game):
       "reminders": {
         "useDefault": True
       },
+      "colorId": googleCalendar.EVENT_COLORIDS["b_green"]
     }
 
     return gameEvent

@@ -14,6 +14,20 @@ A token.pickle file will be created for permissions to Google Calendar.
 Author: Nils Forssén, Jämtland County, Sweden
 """
 
+EVENT_COLORIDS = {
+    "blue": 1,
+    "green": 2,
+    "purple": 3,
+    "red": 4,
+    "yellow": 5,
+    "orange": 6,
+    "turquoise": 7,
+    "gray": 8,
+    "b_blue": 9,
+    "b_green": 10,
+    "b_red": 11
+}
+
 
 # Give accesss to complete Google Calendar
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
