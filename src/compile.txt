@@ -1,0 +1,3 @@
+pyinstaller compile command:
+
+pyinstaller --onefile --icon=calendar_icon.ico --noconsole --add-data "calendar_icon.ico;." Fogis2Calendar.py
