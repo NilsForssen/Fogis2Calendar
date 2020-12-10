@@ -87,7 +87,7 @@ def getDataPage(uName, pWord):
             return dataPage
 
 
-def formatGame(game):
+def formatGame(game, offset="+02:00"):
     """
     Turn given game into google calendar event format
     """
@@ -108,10 +108,10 @@ def formatGame(game):
       "location": "{0}".format(game["location"].replace("GoogleBingHitta.se", "")),
       "description": "{0}\n{1}\nMatchnummer: {2}".format(game["game"], game["referees"], game["number"]),
       "start": {
-        "dateTime": "{0}T{1}+02:00".format(game["time"][:10], startTime.strftime("%H:%M:%S"))
+        "dateTime": "{0}T{1}{2}".format(game["time"][:10], startTime.strftime("%H:%M:%S"), offset)
       },
       "end": {
-        "dateTime": "{0}T{1}+02:00".format(game["time"][:10], endTime.strftime("%H:%M:%S"))
+        "dateTime": "{0}T{1}{2}".format(game["time"][:10], endTime.strftime("%H:%M:%S"), offset)
       },
 
       "reminders": {
@@ -123,7 +123,7 @@ def formatGame(game):
     return gameEvent
 
 
-def updateCalendar(page):
+def updateCalendar(page, offset):
     """
     Update the calendar with games from given dataPage
     """
@@ -149,7 +149,7 @@ def updateCalendar(page):
     data.pop(0)
 
     # Format all games from fogis
-    data = list(map(formatGame, data))
+    data = list(map(lambda g : formatGame(g, offset), data))
     comingEvents = googleCalendar.listEvents(timeMin=data[0]["start"]["dateTime"], timeMax=data[-1]["end"]["dateTime"])
     print(data[0]["start"]["dateTime"])
     # Delete all coming games to refresh them
@@ -210,6 +210,11 @@ if __name__ == "__main__":
         promptString.set("")
         promptLabel = tk.Label(textvariable=promptString, font="Helvetica 10")
 
+        offsetHeader = tk.Label(text="GMT offset:", font="Helvetica 10")
+        offsetString = tk.StringVar()
+        offsetString.set("+02:00")
+        offsetEntry = tk.Entry(textvariable=offsetString)
+        
         def btnUpdateCalendar():
             """
             Comprehensive update calendar function linked to btn in GUI 
@@ -221,7 +226,7 @@ if __name__ == "__main__":
 
                 promptString.set("Updated!")
                 promptLabel.config(fg="green2")
-                updateCalendar(page)
+                updateCalendar(page, offsetString.get())
 
                 # "Updated"
 
@@ -239,8 +244,10 @@ if __name__ == "__main__":
         uNameEntry.grid(row=1, column=1, sticky="EW")
         pWordLabel.grid(row=2, sticky="W")
         pWordEntry.grid(row=2, column=1, sticky="EW")
-        promptLabel.grid(columnspan=2, row=3, sticky="NSEW")
-        btn.grid(columnspan=2, row=4)
+        offsetHeader.grid(row=3, column=0, sticky="W")
+        offsetEntry.grid(row=3, column=1, sticky="EW")
+        promptLabel.grid(columnspan=2, row=4, sticky="NSEW")
+        btn.grid(columnspan=2, row=5)
 
         root.mainloop()
 
@@ -251,6 +258,7 @@ if __name__ == "__main__":
         try:
             username = sys.argv[1]
             password = sys.argv[2]
+            timeoff = sys.argv[3]
         except IndexError:
             print("Both username and password must be passed as arguments")
             sys.exit()
@@ -258,6 +266,6 @@ if __name__ == "__main__":
         page = getDataPage(username, password)
 
         if page is not None:
-            updateCalendar(page)
+            updateCalendar(page, offset=timeoff)
         else:
             print("Login unsuccessfull")
