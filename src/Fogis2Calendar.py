@@ -37,6 +37,7 @@ def resource_path(relative_path):
 
     return os.path.join(os.path.abspath("."), relative_path)
 
+
 def getDataPage(uName, pWord):
     """
     Login to fogis and return the datapage.
@@ -64,9 +65,9 @@ def getDataPage(uName, pWord):
 
         payload["__VIEWSTATE"] = soup.select_one("#__VIEWSTATE")["value"]
         payload["__VIEWSTATEGENERATOR"] = soup.select_one("#__VIEWSTATEGENERATOR")["value"]
-        payload["__VIEWSTATE"] = soup.find("input", attrs={"name" : "__VIEWSTATE"})["value"]
-        payload["__VIEWSTATEGENERATOR"] = soup.find("input", attrs={"name" : "__VIEWSTATEGENERATOR"})["value"]
-        payload["__EVENTVALIDATION"] = soup.find("input", attrs={"name" : "__EVENTVALIDATION"})["value"]
+        payload["__VIEWSTATE"] = soup.find("input", attrs={"name": "__VIEWSTATE"})["value"]
+        payload["__VIEWSTATEGENERATOR"] = soup.find("input", attrs={"name": "__VIEWSTATEGENERATOR"})["value"]
+        payload["__EVENTVALIDATION"] = soup.find("input", attrs={"name": "__EVENTVALIDATION"})["value"]
 
         # Post with the login credentials and additional required information
         session.post("https://fogis.svenskfotboll.se/Fogisdomarklient/login/Login.aspx", data=payload, headers=headers)
@@ -94,30 +95,30 @@ def formatGame(game, offset="+02:00"):
 
     # If time is TBD, set event time to 00:00:00
     if ":" in game["time"][-5:]:
-        startTime =  datetime.datetime.strptime(game["time"][-5:], "%H:%M")
+        startTime = datetime.datetime.strptime(game["time"][-5:], "%H:%M")
         duration = datetime.datetime.strptime("01:30", "%H:%M")
     else:
         startTime = datetime.datetime.strptime("00:00", "%H:%M")
         duration = datetime.datetime.strptime("00:00", "%H:%M")
 
     endTime = startTime + datetime.timedelta(hours=duration.hour, minutes=duration.minute, seconds=duration.second)
-    
+
     # create google-calendar-friendly event out of given game
     gameEvent = {
-      "summary": "Domare {0}".format(game["competition"]),
-      "location": "{0}".format(game["location"].replace("GoogleBingHitta.se", "")),
-      "description": "{0}\n{1}\nMatchnummer: {2}".format(game["game"], game["referees"], game["number"]),
-      "start": {
-        "dateTime": "{0}T{1}{2}".format(game["time"][:10], startTime.strftime("%H:%M:%S"), offset)
-      },
-      "end": {
-        "dateTime": "{0}T{1}{2}".format(game["time"][:10], endTime.strftime("%H:%M:%S"), offset)
-      },
+        "summary": "Domare {0}".format(game["competition"]),
+        "location": "{0}".format(game["location"].replace("GoogleBingHitta.se", "")),
+        "description": "{0}\n{1}\nMatchnummer: {2}".format(game["game"], game["referees"], game["number"]),
+        "start": {
+            "dateTime": "{0}T{1}{2}".format(game["time"][:10], startTime.strftime("%H:%M:%S"), offset)
+        },
+        "end": {
+            "dateTime": "{0}T{1}{2}".format(game["time"][:10], endTime.strftime("%H:%M:%S"), offset)
+        },
 
-      "reminders": {
-        "useDefault": True
-      },
-      "colorId": googleCalendar.EVENT_COLORIDS["b_green"]
+        "reminders": {
+            "useDefault": True
+        },
+        "colorId": googleCalendar.EVENT_COLORIDS["b_green"]
     }
 
     return gameEvent
@@ -128,57 +129,57 @@ def updateCalendar(page, offset):
     Update the calendar with games from given dataPage
     """
 
-    # Parse the HTML schedule-table into a list with dictionaries for every coming game 
+    # Parse the HTML schedule-table into a list with dictionaries for every coming game
     soup = BeautifulSoup(page.content, features="lxml")
 
     data = []
     gameHeaders = ["time", "competition", "round", "number", "game", "location", "referees", ]
 
-    table = soup.find('table', attrs={'class':'fogisInfoTable'})
+    table = soup.find('table', attrs={'class': 'fogisInfoTable'})
     tableBody = table.find('tbody')
 
     rows = tableBody.find_all('tr')
     for row in rows:
 
         # Remove some indesirable characters and whitespace from each cell
-        game = dict(zip(gameHeaders, [unicodedata.normalize("NFKC", item.text.strip().replace("  ","")).replace("\n", "").replace("\r", "") for item in row.find_all('td')]))
-        
+        game = dict(zip(gameHeaders, [unicodedata.normalize("NFKC", item.text.strip().replace("  ", "")).replace("\n", "").replace("\r", "") for item in row.find_all('td')]))
+
         data.append(game)
 
     # Remove empty top row
     data.pop(0)
 
     # Format all games from fogis
-    data = list(map(lambda g : formatGame(g, offset), data))
-    comingEvents = googleCalendar.listEvents(timeMin=data[0]["start"]["dateTime"], timeMax=data[-1]["end"]["dateTime"])
-    print(data[0]["start"]["dateTime"])
-    # Delete all coming games to refresh them
-    for comingEvent in comingEvents:
-        
-        try:
-            lastLine = comingEvent["description"].splitlines()[-1]
+    data = list(map(lambda g: formatGame(g, offset), data))
+    if data:
+        comingEvents = googleCalendar.listEvents(timeMin=data[0]["start"]["dateTime"], timeMax=data[-1]["end"]["dateTime"])
+        print(data[0]["start"]["dateTime"])
+        # Delete all coming games to refresh them
+        for comingEvent in comingEvents:
 
-            if "Matchnummer: " in lastLine:
+            try:
+                lastLine = comingEvent["description"].splitlines()[-1]
 
-                # The event is a previously uploaded game, delete it
-                # All currently active games will be added later
-                # This game could have e.g. been canceled recently, thus it needs removal
+                if "Matchnummer: " in lastLine:
 
-                googleCalendar.deleteEvent(comingEvent["id"])
+                    # The event is a previously uploaded game, delete it
+                    # All currently active games will be added later
+                    # This game could have e.g. been canceled recently, thus it needs removal
 
-        except KeyError:
+                    googleCalendar.deleteEvent(comingEvent["id"])
 
-            # An event wiithout a description was found, this is not a game from fogis
+            except KeyError:
 
-            pass
+                # An event wiithout a description was found, this is not a game from fogis
 
+                pass
 
     for game in data:
 
         # Add all new events, in case the event was just deleted, this will just refresh it
 
         googleCalendar.createEvent(game)
-        
+
         print("Event created! {0}".format(game["start"]["dateTime"]))
 
 
@@ -214,10 +215,10 @@ if __name__ == "__main__":
         offsetString = tk.StringVar()
         offsetString.set("+02:00")
         offsetEntry = tk.Entry(textvariable=offsetString)
-        
+
         def btnUpdateCalendar():
             """
-            Comprehensive update calendar function linked to btn in GUI 
+            Comprehensive update calendar function linked to btn in GUI
             """
 
             page = getDataPage(uNameEntry.get(), pWordEntry.get())
@@ -234,7 +235,6 @@ if __name__ == "__main__":
 
                 promptString.set("Login unsuccessful!")
                 promptLabel.config(fg="red2")
-
 
         btn = tk.Button(text="Update Calendar", font="Helvetica 10 bold", command=btnUpdateCalendar, bg="green2", activebackground="green2")
 
